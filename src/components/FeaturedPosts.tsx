@@ -109,8 +109,8 @@ const FeaturedPosts: FC<Props> = (props) => {
                 feature_image,
               } = frontmatter;
 
-              const primary_author = authors[0];
-              const primary_tag = tags[0];
+              const primary_author = authors?.length > 0 ? authors[0] : null;
+              const primary_tag = tags?.length > 0 ? tags[0] : null;
 
               const imageData = getImage(feature_image);
 
@@ -142,21 +142,23 @@ const FeaturedPosts: FC<Props> = (props) => {
                       )}
                     </div>
                     <div className="m-featured-article__meta">
-                      <Link
-                        to={`/author/${primary_author.id}`}
-                        className="m-featured-article__author js-tooltip"
-                        aria-label={primary_author.name}
-                      >
-                        {/*  data-tippy-content="{{t "Posted by"}} {{primary_author.name}} {{authors autolink="false" from="2" prefix=(t "Among with") separator=" , "}}" */}
-                        <div
-                          style={{
-                            backgroundImage: `url(${
-                              primary_author.profile_image ||
-                              "/assets/images/default-avatar-square-small.jpg"
-                            })`,
-                          }}
-                        />
-                      </Link>
+                      {primary_author && (
+                        <Link
+                          to={`/author/${primary_author.id}`}
+                          className="m-featured-article__author js-tooltip"
+                          aria-label={primary_author.name}
+                        >
+                          {/*  data-tippy-content="{{t "Posted by"}} {{primary_author.name}} {{authors autolink="false" from="2" prefix=(t "Among with") separator=" , "}}" */}
+                          <div
+                            style={{
+                              backgroundImage: `url(${
+                                primary_author.profile_image ||
+                                "/assets/images/default-avatar-square-small.jpg"
+                                })`,
+                            }}
+                          />
+                        </Link>
+                      )}
                       {primary_tag && (
                         <Link
                           to={`/tag/${primary_tag.id}`}

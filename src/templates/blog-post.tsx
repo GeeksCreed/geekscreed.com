@@ -29,8 +29,8 @@ const Post = (props) => {
 
   const { tags, authors, published_at, feature_image } = post.frontmatter;
 
-  const primary_author = authors[0];
-  const primary_tag = tags[0];
+  const primary_author = authors?.length > 0 ? authors[0] : null;
+  const primary_tag = tags?.length > 0 ? tags[0] : null;
 
   const [showContent, setShowContent] = useState(false);
 
@@ -93,26 +93,28 @@ const Post = (props) => {
 
   return (
     <Layout title={title}>
-      <Helmet
-        meta={[
-          {
-            name: "twitter:creator",
-            content: primary_author.twitter && `@${primary_author.twitter}`,
-          },
-          { name: "twitter:card", content: "summary_large_image" },
-          { property: "og:url", content: url },
-          { property: "og:type", content: "article" },
-          { property: "og:title", content: title },
-          { property: "og:description", content: post.excerpt },
-          {
-            property: "og:image",
-            content: heroImage,
-          },
-        ]}
-        link={[{ rel: "canonical", href: url }]}
-      >
-        <script type="application/ld+json">{articleLdJson}</script>
-      </Helmet>
+      {primary_author && (
+        <Helmet
+          meta={[
+            {
+              name: "twitter:creator",
+              content: primary_author.twitter && `@${primary_author.twitter}`,
+            },
+            { name: "twitter:card", content: "summary_large_image" },
+            { property: "og:url", content: url },
+            { property: "og:type", content: "article" },
+            { property: "og:title", content: title },
+            { property: "og:description", content: post.excerpt },
+            {
+              property: "og:image",
+              content: heroImage,
+            },
+          ]}
+          link={[{ rel: "canonical", href: url }]}
+        >
+          <script type="application/ld+json">{articleLdJson}</script>
+        </Helmet>
+      )}
 
       <main className="main-wrap">
         <article>
@@ -203,103 +205,107 @@ const Post = (props) => {
               </div>
             </div>
 
-            <section className="m-author">
-              <div className="m-author__content">
-                <div className="m-author__picture">
-                  <Link
-                    to={`/author/${primary_author.id}`}
-                    className="m-author-picture"
-                    aria-label={primary_author.name}
-                  >
-                    <div
-                      style={{
-                        backgroundImage: `url(${
-                          primary_author.profile_image ||
-                          "/images/default-avatar-square-small.jpg"
-                        })`,
-                      }}
-                    />
-                  </Link>
-                </div>
-                <div className="m-author__info">
-                  <h4 className="m-author__name">
-                    <Link to={`/author/${primary_author.id}`}>
-                      {primary_author.name}
+            {primary_author && (
+              <section className="m-author">
+                <div className="m-author__content">
+                  <div className="m-author__picture">
+                    <Link
+                      to={`/author/${primary_author.id}`}
+                      className="m-author-picture"
+                      aria-label={primary_author.name}
+                    >
+                      <div
+                        style={{
+                          backgroundImage: `url(${
+                            primary_author.profile_image ||
+                            "/images/default-avatar-square-small.jpg"
+                            })`,
+                        }}
+                      />
                     </Link>
-                  </h4>
-                  {/* {{#has author="count:>1"}}
+                  </div>
+                  <div className="m-author__info">
+                    {primary_author.id && (
+                      <h4 className="m-author__name">
+                        <Link to={`/author/${primary_author.id}`}>
+                          {primary_author.name}
+                        </Link>
+                      </h4>
+                    )}
+                    {/* {{#has author="count:>1"}}
                 <p className="m-small-text in-author-along-with">
                   {{authors separator=", " prefix=(t "Among with no break line") from="2"}}
                 </p>
               {{/has}} */}
-                  {primary_author.bio && (
-                    <p className="m-author__bio">{primary_author.bio}</p>
-                  )}
-                  <ul className="m-author-links">
-                    {primary_author.website && (
-                      <li>
-                        <a
-                          href={primary_author.website}
-                          target="_blank"
-                          rel="noopener"
-                          aria-label="Website"
-                        >
-                          <span
-                            className="icon-globe"
-                            aria-hidden="true"
-                          ></span>
-                        </a>
-                      </li>
+                    {primary_author.bio && (
+                      <p className="m-author__bio">{primary_author.bio}</p>
                     )}
-                    {primary_author.facebook && (
-                      <li>
-                        <a
-                          href={`https://facebook.com/${primary_author.facebook}`}
-                          target="_blank"
-                          rel="noopener"
-                          aria-label="Facebook"
-                        >
-                          <span
-                            className="icon-facebook"
-                            aria-hidden="true"
-                          ></span>
-                        </a>
-                      </li>
-                    )}
-                    {primary_author.twitter && (
-                      <li>
-                        <a
-                          href={`https://twitter.com/${primary_author.twitter}`}
-                          target="_blank"
-                          rel="noopener"
-                          aria-label="Twitter"
-                        >
-                          <span
-                            className="icon-twitter"
-                            aria-hidden="true"
-                          ></span>
-                        </a>
-                      </li>
-                    )}
-                    {primary_author.linkedin && (
-                      <li>
-                        <a
-                          href={`https://linkedin.com/in/${primary_author.linkedin}`}
-                          target="_blank"
-                          rel="noopener"
-                          aria-label="Linkedin"
-                        >
-                          <span
-                            className="icon-linkedin"
-                            aria-hidden="true"
-                          ></span>
-                        </a>
-                      </li>
-                    )}
-                  </ul>
+                    <ul className="m-author-links">
+                      {primary_author.website && (
+                        <li>
+                          <a
+                            href={primary_author.website}
+                            target="_blank"
+                            rel="noopener"
+                            aria-label="Website"
+                          >
+                            <span
+                              className="icon-globe"
+                              aria-hidden="true"
+                            ></span>
+                          </a>
+                        </li>
+                      )}
+                      {primary_author.facebook && (
+                        <li>
+                          <a
+                            href={`https://facebook.com/${primary_author.facebook}`}
+                            target="_blank"
+                            rel="noopener"
+                            aria-label="Facebook"
+                          >
+                            <span
+                              className="icon-facebook"
+                              aria-hidden="true"
+                            ></span>
+                          </a>
+                        </li>
+                      )}
+                      {primary_author.twitter && (
+                        <li>
+                          <a
+                            href={`https://twitter.com/${primary_author.twitter}`}
+                            target="_blank"
+                            rel="noopener"
+                            aria-label="Twitter"
+                          >
+                            <span
+                              className="icon-twitter"
+                              aria-hidden="true"
+                            ></span>
+                          </a>
+                        </li>
+                      )}
+                      {primary_author.linkedin && (
+                        <li>
+                          <a
+                            href={`https://linkedin.com/in/${primary_author.linkedin}`}
+                            target="_blank"
+                            rel="noopener"
+                            aria-label="Linkedin"
+                          >
+                            <span
+                              className="icon-linkedin"
+                              aria-hidden="true"
+                            ></span>
+                          </a>
+                        </li>
+                      )}
+                    </ul>
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            )}
 
             {disqusShortName && (
               <section className="m-comments">
