@@ -18,8 +18,8 @@ const PostCard = (props) => {
     featured,
   } = frontmatter;
 
-  const primary_author = authors[0];
-  const primary_tag = tags[0];
+  const primary_author = authors?.length > 0 ? authors[0] : null;
+  const primary_tag = tags?.length > 0 ? tags[0] : null;
 
   const imageData = getImage(feature_image);
 
@@ -62,7 +62,7 @@ const PostCard = (props) => {
             alt=""
           />
         </Link>
-        <Link
+        {primary_author && (<Link
           to={`/author/${primary_author.id}`}
           className="m-article-card__author js-tooltip"
           aria-label={primary_author.name}
@@ -85,6 +85,7 @@ const PostCard = (props) => {
             />
           </TooltipWrapper>
         </Link>
+        )}
         {featured && (
           <Link
             to={`/blog${post.fields.slug}`}
