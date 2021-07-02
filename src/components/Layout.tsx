@@ -1,6 +1,13 @@
-import React, { Fragment, Suspense, useEffect, useMemo, useState } from "react";
+import React, {
+  Fragment,
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from "react";
 import { graphql, useStaticQuery } from "gatsby";
-import { Helmet } from "react-helmet";
+import { useLink, useScript, useHead, useTitleTemplate } from "hoofd";
 // import AOS from "aos";
 import Header from "./Header";
 import Footer from "./Footer";
@@ -13,7 +20,7 @@ const AD_SENSE_CLIENT = process.env.GATSBY_GOOGLE_AD_SENSE_CLIENT;
 
 const Search = React.lazy(() => import("./Search"));
 
-const Layout = ({ title = "", children }) => {
+const Layout = ({ children, location }) => {
   const [theme, setTheme] = useState("light");
 
   const [showSearch, setShowSearch] = useState(false);
@@ -39,14 +46,16 @@ const Layout = ({ title = "", children }) => {
         setTheme("dark");
       }
     }
+  }, []);
 
+  useLayoutEffect(() => {
     // To reset to scroll position
     window.scrollTo({
       left: 0,
       top: 0,
       behavior: "auto",
     });
-  }, []);
+  }, [location.pathname]);
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
@@ -98,10 +107,6 @@ const Layout = ({ title = "", children }) => {
 
   const { siteMetadata } = site;
 
-  const pageTitle = title
-    ? `${title} | ${siteMetadata.title}`
-    : `${siteMetadata.title} - ${siteMetadata.description}`;
-
   const organizationLdJson = useMemo(() => {
     const json = {
       "@context": "http://schema.org",
@@ -127,39 +132,45 @@ const Layout = ({ title = "", children }) => {
     setTheme(value);
   };
 
+  useTitleTemplate(`%s | ${siteMetadata.title}`);
+
+  useHead({
+    language: "en",
+    metas: [
+      { httpEquiv: "X-UA-Compatible", content: "IE=edge" },
+      { name: "HandheldFriendly", content: "True" },
+      { name: "viewport", content: "width=device-width, initial-scale=1.0" },
+      { name: "description", content: siteMetadata.description },
+      { name: "og:site_name", content: siteMetadata.title },
+      { name: "og:description", content: siteMetadata.description },
+      { name: "twitter:site", content: siteMetadata.social.twitter },
+    ],
+  });
+
+  useLink({ rel: "dns-prefetch", href: "https://polyfill.io" });
+  useLink({ rel: "preconnect", href: "https://polyfill.io" });
+
+  useLink({
+    rel: "dns-prefetch",
+    href: "https://avatars0.githubusercontent.com",
+  });
+  useLink({
+    rel: "preconnect",
+    href: "https://avatars0.githubusercontent.com",
+  });
+
+  useScript({
+    id: "org-ld-data",
+    type: "application/ld+json",
+    text: organizationLdJson,
+  });
+
+  useEffect(() => {
+    document.body.classList.toggle("no-scroll-y", showSearch);
+  }, [showSearch]);
+
   return (
     <Fragment>
-      <Helmet>
-        <html lang="en" />
-
-        <title> {pageTitle} </title>
-
-        <meta charSet="utf-8" />
-        <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="HandheldFriendly" content="True" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-        <link rel="preconnect" href="https://polyfill.io" />
-        <link rel="dns-prefetch" href="https://polyfill.io" />
-
-        {/* {AD_SENSE_CLIENT && (
-          <script
-            data-ad-client={AD_SENSE_CLIENT}
-            async
-            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"
-          ></script>
-        )} */}
-
-        <meta name="description" content={siteMetadata.description} />
-        <meta name="og:site_name" content={siteMetadata.title} />
-        <meta name="og:description" content={siteMetadata.description} />
-        <meta name="twitter:site" content={siteMetadata.social.twitter} />
-
-        <script type="application/ld+json">{`${organizationLdJson}`}</script>
-
-        <body className={showSearch ? "no-scroll-y" : ""} />
-      </Helmet>
-
       <Header
         theme={theme}
         siteMetadata={site.siteMetadata}

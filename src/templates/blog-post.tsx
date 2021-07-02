@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, Fragment } from "react";
 import { graphql, Link } from "gatsby";
-import { Helmet } from "react-helmet";
+import { useHead, useLink, useScript } from "hoofd";
 import { getImage } from "gatsby-plugin-image";
 
 import { useInView } from "react-intersection-observer";
@@ -8,7 +8,6 @@ import { DiscussionEmbed } from "disqus-react";
 
 import PageProgressButton from "../components/PageProgressButton";
 import HeroImage from "../components/HeroImage";
-import Layout from "../components/Layout";
 import RelatedPosts from "../components/RelatedPosts";
 import TooltipWrapper from "../components/TooltipWrapper";
 
@@ -91,31 +90,35 @@ const Post = (props) => {
     return JSON.stringify(json);
   }, []);
 
-  return (
-    <Layout title={title}>
-      {primary_author && (
-        <Helmet
-          meta={[
-            {
-              name: "twitter:creator",
-              content: primary_author.twitter && `@${primary_author.twitter}`,
-            },
-            { name: "twitter:card", content: "summary_large_image" },
-            { property: "og:url", content: url },
-            { property: "og:type", content: "article" },
-            { property: "og:title", content: title },
-            { property: "og:description", content: post.excerpt },
-            {
-              property: "og:image",
-              content: heroImage,
-            },
-          ]}
-          link={[{ rel: "canonical", href: url }]}
-        >
-          <script type="application/ld+json">{articleLdJson}</script>
-        </Helmet>
-      )}
+  useHead({
+    title: title,
+    metas: [
+      {
+        name: "twitter:creator",
+        content: primary_author.twitter && `@${primary_author.twitter}`,
+      },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: url },
+      { property: "og:type", content: "article" },
+      { property: "og:title", content: title },
+      { property: "og:description", content: post.excerpt },
+      {
+        property: "og:image",
+        content: heroImage,
+      },
+    ],
+  });
 
+  useLink({ rel: "canonical", href: url });
+
+  useScript({
+    id: "article-ld-data",
+    type: "application/ld+json",
+    text: articleLdJson,
+  });
+
+  return (
+    <Fragment>
       <main className="main-wrap">
         <article>
           <div className="l-content in-post">
@@ -344,7 +347,7 @@ const Post = (props) => {
           </div>
         </article>
       </main>
-    </Layout>
+    </Fragment>
   );
 };
 

@@ -57,7 +57,6 @@ module.exports = {
     "gatsby-plugin-image",
     "gatsby-plugin-sharp",
     "gatsby-transformer-sharp",
-    "gatsby-plugin-react-helmet",
 
     {
       resolve: "gatsby-plugin-local-search",
@@ -176,6 +175,8 @@ module.exports = {
     },
 
     // "gatsby-plugin-webpack-bundle-analyser-v2",
+
+    "gatsby-plugin-hoofd",
 
     ...(isProduction
       ? [

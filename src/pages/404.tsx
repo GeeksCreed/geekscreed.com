@@ -1,13 +1,14 @@
-import React from "react";
+import React, { Fragment } from "react";
 import { Link } from "gatsby";
-
-import Layout from "../components/Layout";
+import { useTitle } from "hoofd";
 
 import "../styles/404.scss";
 
 const Custom404Page = () => {
+  useTitle("Page not found");
+
   return (
-    <Layout>
+    <Fragment>
       <main className="l-fullscreen">
         <section
           className="l-fullscreen__content"
@@ -24,7 +25,7 @@ const Custom404Page = () => {
           </Link>
         </section>
       </main>
-    </Layout>
+    </Fragment>
   );
 };
 

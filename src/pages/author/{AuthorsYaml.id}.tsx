@@ -1,8 +1,7 @@
 import React, { Fragment } from "react";
 import { graphql } from "gatsby";
-import { Helmet } from "react-helmet";
+import { useTitle } from "hoofd";
 
-import Layout from "../../components/Layout";
 import HeroImage from "../../components/HeroImage";
 import PostCard from "../../components/PostCard";
 
@@ -10,8 +9,10 @@ const Author = (props) => {
   const { author, posts } = props.data;
   const length = posts.nodes.length;
 
+  useTitle(`Posts by ${author.name}`);
+
   return (
-    <Layout title={`Posts by ${author.name}`}>
+    <Fragment>
       <main className="main-wrap">
         <HeroImage source={author.cover_image}>
           <div className="m-hero__content" data-aos="fade-down">
@@ -109,7 +110,7 @@ const Author = (props) => {
           </div>
         </div>
       </main>
-    </Layout>
+    </Fragment>
   );
 };
 

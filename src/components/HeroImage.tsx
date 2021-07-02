@@ -20,7 +20,7 @@ const HeroImage = (props: Props) => {
           "in-post": post,
         })}
       >
-        <GatsbyImage image={imageData} alt="Plant" />
+        <GatsbyImage image={imageData} loading="eager" alt="Plant" />
       </div>
 
       {children}

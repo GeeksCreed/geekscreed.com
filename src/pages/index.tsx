@@ -1,7 +1,7 @@
 import React, { Fragment } from "react";
 import { graphql } from "gatsby";
+import { useTitle } from "hoofd";
 
-import Layout from "../components/Layout";
 import HeroImage from "../components/HeroImage";
 import PostCard from "../components/PostCard";
 import FeaturedPosts from "../components/FeaturedPosts";
@@ -14,38 +14,33 @@ export default function Home(props) {
 
   const { siteMetadata } = site;
 
+  useTitle(siteMetadata.description);
+
   return (
-    <Layout>
-      <Fragment>
-        {/* <Head>
-          <title>
-            {site_title} | {site_description}
-          </title>
-        </Head> */}
-        <main className="main-wrap">
-          <HeroImage source={coverImage}>
-            <div className="m-hero__content" data-aos="fade-down">
-              <h1 className="m-hero-title bigger">{siteMetadata.title}</h1>
-              <p className="m-hero-description bigger">
-                {siteMetadata.description}
-              </p>
-            </div>
-          </HeroImage>
-          <div className="l-content">
-            <div className="l-wrapper" data-aos="fade-up" data-aos-delay="300">
-              <div className="l-grid centered">
-                {featuredPosts.edges.length > 0 ? (
-                  <FeaturedPosts posts={featuredPosts.edges} />
-                ) : null}
-                {posts.edges.map(({ node: post }) => (
-                  <PostCard post={post} key={post.fields.slug} />
-                ))}
-              </div>
+    <Fragment>
+      <main className="main-wrap">
+        <HeroImage source={coverImage}>
+          <div className="m-hero__content" data-aos="fade-down">
+            <h1 className="m-hero-title bigger">{siteMetadata.title}</h1>
+            <p className="m-hero-description bigger">
+              {siteMetadata.description}
+            </p>
+          </div>
+        </HeroImage>
+        <div className="l-content">
+          <div className="l-wrapper" data-aos="fade-up" data-aos-delay="300">
+            <div className="l-grid centered">
+              {featuredPosts.edges.length > 0 ? (
+                <FeaturedPosts posts={featuredPosts.edges} />
+              ) : null}
+              {posts.edges.map(({ node: post }) => (
+                <PostCard post={post} key={post.fields.slug} />
+              ))}
             </div>
           </div>
-        </main>
-      </Fragment>
-    </Layout>
+        </div>
+      </main>
+    </Fragment>
   );
 }
 

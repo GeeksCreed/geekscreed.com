@@ -1,6 +1,6 @@
-import React from "react";
+import React, { Fragment } from "react";
+import { useTitle } from "hoofd";
 
-import Layout from "../../components/Layout";
 import HeroImage from "../../components/HeroImage";
 import PostCard from "../../components/PostCard";
 import { graphql } from "gatsby";
@@ -10,8 +10,10 @@ const Tag = (props) => {
 
   const length = posts.nodes.length;
 
+  useTitle(`Posts tagged under ${tag.name}`);
+
   return (
-    <Layout title={`Posts tagged under ${tag.name}`}>
+    <Fragment>
       <main className="main-wrap">
         <HeroImage source={tag.feature_image}>
           <div className="m-hero__content" data-aos="fade-down">
@@ -44,7 +46,7 @@ const Tag = (props) => {
           </div>
         </div>
       </main>
-    </Layout>
+    </Fragment>
   );
 };
 
