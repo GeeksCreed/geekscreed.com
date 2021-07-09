@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[GeeksCreed]]></title><description><![CDATA[Tech Blog for Geeks and Hobbyists 💻]]></description><link>https://geekscreed.com</link><generator>GatsbyJS</generator><lastBuildDate>Fri, 09 Jul 2021 07:15:01 GMT</lastBuildDate><item><title><![CDATA[Dynamic Import named exports in JavaScript]]></title><description><![CDATA[JavaScript has come a long way since its introduction in 1995. The dynamics of the language have completely changed since the adaptation of…]]></description><link>https://geekscreed.com/dynamic-import-named-export/</link><guid isPermaLink="false">https://geekscreed.com/dynamic-import-named-export/</guid><category><![CDATA[JavaScript]]></category><category><![CDATA[Webpack]]></category><category><![CDATA[Web Development]]></category><pubDate>Wed, 17 Feb 2021 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;JavaScript has come a long way since its introduction in 1995. The dynamics of the language have completely changed since the adaptation of the &lt;code&gt;ECMAScript 2015 (ES6)&lt;/code&gt; standard, that got released in 2015.&lt;/p&gt;
+&lt;p&gt;As many legacy applications started moving to the Web, the web was no longer a place to just serve information. Lots of businesses around the world can run on a web browser. The advent of &lt;code&gt;ChromeOS&lt;/code&gt; and &lt;code&gt;Windows 10X&lt;/code&gt; operating systems are proving the same. As a result of such growth, the amount of JavaScript code that we ship to the client has also increased in an exploding way.&lt;/p&gt;
+&lt;p&gt;To solve this problem of shipping a big bundle of JavaScript, we can take advantage of &lt;a href=&quot;https://github.com/tc39/proposal-dynamic-import&quot;&gt;dynamic import&lt;/a&gt; (i.e.- lazyload) feature that got introduced in &lt;code&gt;ECMAScript 2020&lt;/code&gt;. It helps us remove that module from our main bundle by code splitting and download the JavaScript module on demand instead of downloading it at the time of page load.&lt;/p&gt;
+&lt;p&gt;Let&apos;s say we have a module with different exports.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;js&quot;&gt;&lt;pre class=&quot;lang-js&quot;&gt;&lt;code class=&quot;lang-js&quot;&gt;&lt;span class=&quot;token comment&quot;&gt;// lib/math.js&lt;/span&gt;
+
+&lt;span class=&quot;token keyword&quot;&gt;export&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;token function-variable function&quot;&gt;sum&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token parameter&quot;&gt;a&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; b&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&gt;&lt;/span&gt; a &lt;span class=&quot;token operator&quot;&gt;+&lt;/span&gt; b&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;token keyword&quot;&gt;export&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;token function-variable function&quot;&gt;sub&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token parameter&quot;&gt;a&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; b&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&gt;&lt;/span&gt; a &lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt; b&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;token keyword&quot;&gt;export&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;token function-variable function&quot;&gt;mul&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token parameter&quot;&gt;a&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; b&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&gt;&lt;/span&gt; a &lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt; b&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;token keyword&quot;&gt;export&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;token function-variable function&quot;&gt;div&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token parameter&quot;&gt;a&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; b&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&gt;&lt;/span&gt; a &lt;span class=&quot;token operator&quot;&gt;/&lt;/span&gt; b&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;token keyword&quot;&gt;export&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;default&lt;/span&gt; Math&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;We can import a JavaScript module dynamically using the &lt;code&gt;import(&amp;#x3C;path_to_the_module&gt;)&lt;/code&gt; syntax.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;js&quot;&gt;&lt;pre class=&quot;lang-js&quot;&gt;&lt;code class=&quot;lang-js&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;import&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;./lib/math.js&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token function&quot;&gt;then&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token parameter&quot;&gt;module&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&gt;&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;token comment&quot;&gt;// The resulting module will have every export from the module&lt;/span&gt;
+  &lt;span class=&quot;token keyword&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;default&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;as&lt;/span&gt; Math&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; sum&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; sub&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; mul&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; div &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; module&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;But there is one problem here. But default, the entire module is exported including the default and named exports.&lt;/p&gt;
+&lt;p&gt;What if we want to import only one named export or only default export instead of the entire module dynamically? Let&apos;s see a couple of ways on how to pick only the module(s) that we want.&lt;/p&gt;
+&lt;h3&gt;Webpack Magic Comments&lt;/h3&gt;
+&lt;p&gt;If your current project used &lt;code&gt;Webpack 5&lt;/code&gt;, then there is a webpack magic comment called &lt;code&gt;webpackExports&lt;/code&gt; that comes in handy for this situation. We can specify the list of exports to load as an array to this comment and Webpack will take care of bundling only those modules for loading it dynamically.&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;Note:&lt;/strong&gt; Using older browsers? Check if your browser supports dynamic import syntax on the &lt;a href=&quot;https://caniuse.com/es6-module-dynamic-import&quot;&gt;Can I use&lt;/a&gt; database.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Let&apos;s see this in action.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;js&quot;&gt;&lt;pre class=&quot;lang-js&quot;&gt;&lt;code class=&quot;lang-js&quot;&gt;&lt;span class=&quot;token comment&quot;&gt;// specify webpackExports comments within the import() function&lt;/span&gt;
+
+&lt;span class=&quot;token keyword&quot;&gt;import&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token comment&quot;&gt;/* webpackExports: [&quot;default&quot;, &quot;sum&quot;] */&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;./lib/math.js&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token function&quot;&gt;then&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token parameter&quot;&gt;module&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&gt;&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;token comment&quot;&gt;// Do something with the module.&lt;/span&gt;
+  &lt;span class=&quot;token keyword&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;default&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;as&lt;/span&gt; Math&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; sum &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; module&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;In the above example, we specified a Webpack magic comment called &lt;code&gt;webpackExports&lt;/code&gt; with the value &lt;code&gt;[&quot;default&quot;, &quot;sum&quot;]&lt;/code&gt; to it. While bundling in &lt;strong&gt;production&lt;/strong&gt; mode, Webpack will read this info and pick only the specified exports.&lt;/p&gt;
+&lt;p&gt;Currently &lt;a href=&quot;/tag/gatsby&quot;&gt;Gatsby&lt;/a&gt; has Webpack 5 support from &lt;a href=&quot;https://www.gatsbyjs.com/docs/reference/release-notes/v3.0&quot;&gt;version 3.0&lt;/a&gt; and &lt;code&gt;Create React App&lt;/code&gt; is working the &lt;a href=&quot;https://github.com/facebook/create-react-app/issues/9994&quot;&gt;Webpack 5&lt;/a&gt; support.&lt;/p&gt;
+&lt;h3&gt;Re-export as a different module&lt;/h3&gt;
+&lt;p&gt;Don&apos;t have &lt;code&gt;Webpack 5&lt;/code&gt; yet in your project. No worries. There is another hack to get around this.&lt;/p&gt;
+&lt;p&gt;We just have to create a local module that imports and exports only the exports that we need and dynamically import that module.&lt;/p&gt;
+&lt;p&gt;Let&apos;s create a smaller version of the module by exporting only the required modules from our main module.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;js&quot;&gt;&lt;pre class=&quot;lang-js&quot;&gt;&lt;code class=&quot;lang-js&quot;&gt;&lt;span class=&quot;token comment&quot;&gt;// ./lib/mini-math.js;&lt;/span&gt;
+
+&lt;span class=&quot;token keyword&quot;&gt;export&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt; sum&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;default&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;default&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;./math&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now let&apos;s dynamically import the smaller module.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;js&quot;&gt;&lt;pre class=&quot;lang-js&quot;&gt;&lt;code class=&quot;lang-js&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;import&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;./lib/mini-math.js&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token function&quot;&gt;then&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token parameter&quot;&gt;module&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&gt;&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;token keyword&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;default&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;as&lt;/span&gt; Math&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; sum &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; module&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now, this bundle will have only the entities that we exported.&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;You can also use these methods to import an named export from &lt;code&gt;node_modules&lt;/code&gt; folder.&lt;/p&gt;
+&lt;p&gt;Hope this post helped you to shave off some kilobytes from your JavaScript bundle.&lt;/p&gt;
+&lt;p&gt;If it helped, let me know in the comments section below and share this post with your circle.&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;Hero image by &lt;a href=&quot;https://unsplash.com/@chuttersnap?utm_source=unsplash&amp;amp;utm_medium=referral&amp;amp;utm_content=creditCopyText&quot;&gt;CHUTTERSNAP&lt;/a&gt; on &lt;a href=&quot;https://unsplash.com/s/photos/import?utm_source=unsplash&amp;amp;utm_medium=referral&amp;amp;utm_content=creditCopyText&quot;&gt;Unsplash&lt;/a&gt;&lt;/span&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[TechBending - The Power we didn’t know we would need]]></title><description><![CDATA[Technology is accessible to lots of humans in the world than ever before. Technology helps us to connect irrespective of where we are, work…]]></description><link>https://geekscreed.com/techbending-the-power-you-need/</link><guid isPermaLink="false">https://geekscreed.com/techbending-the-power-you-need/</guid><category><![CDATA[Mental Health]]></category><category><![CDATA[Productivity]]></category><category><![CDATA[Privacy]]></category><pubDate>Mon, 08 Feb 2021 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;Technology is accessible to lots of humans in the world than ever before. Technology helps us to connect irrespective of where we are, work from our own home, shop all essentials online, etc., The raise of technology helped lots of people uplift their lives.&lt;/p&gt;
+&lt;p&gt;The technology that we use every day is exponentially evolving than expected. During the early nineties, if we told the people that your future self would be spending most of the time glued to a handheld screen, they wouldn’t have believed it.&lt;/p&gt;
+&lt;p&gt;But, here we are. There is a high chance that you would be reading this article on a handheld device.&lt;/p&gt;
+&lt;p&gt;Technology has become the 207th bone of the human body. It always stays with us from the moment we woke up to the moment we go to the bed. It&apos;s hard to see a person without a smartphone.&lt;/p&gt;
+&lt;p&gt;&lt;figure class=&quot;gatsby-resp-image-figure&quot; style=&quot;&quot;&gt;
+    &lt;span
+      class=&quot;gatsby-resp-image-wrapper&quot;
+      style=&quot;position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 550px; &quot;
+    &gt;
+      &lt;span
+    class=&quot;gatsby-resp-image-background-image&quot;
+    style=&quot;padding-bottom: 63.190184049079754%; position: relative; bottom: 0; left: 0; background-image: url(&apos;data:image/jpeg;base64,/9j/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wgARCAANABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAMFAQL/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAGj0rCgLD//xAAaEAADAAMBAAAAAAAAAAAAAAABAgMABDIR/9oACAEBAAEFAutirEMvNJFQmt7gkoH/xAAUEQEAAAAAAAAAAAAAAAAAAAAQ/9oACAEDAQE/AT//xAAUEQEAAAAAAAAAAAAAAAAAAAAQ/9oACAECAQE/AT//xAAdEAACAQQDAAAAAAAAAAAAAAAAARECEiFBgZHB/9oACAEBAAY/Ak/TEiJvYm63wb7P/8QAHBAAAwADAAMAAAAAAAAAAAAAAAERITFBUYGh/9oACAEBAAE/IVuYp0RjIpwvJuDYvuQlfLZgSy+h/9oADAMBAAIAAwAAABBAz//EABQRAQAAAAAAAAAAAAAAAAAAABD/2gAIAQMBAT8QP//EABQRAQAAAAAAAAAAAAAAAAAAABD/2gAIAQIBAT8QP//EAB4QAQADAAEFAQAAAAAAAAAAAAEAESExUWFxkdHw/9oACAEBAAE/EMChsWXlmHFN74gtJFIs7zWarSxpYeQb9lRKQ/C7AB0Ov2n/2Q==&apos;); background-size: cover; display: block;&quot;
+  &gt;&lt;/span&gt;
+  &lt;img
+        class=&quot;gatsby-resp-image-image&quot;
+        alt=&quot;Chained to Tech&quot;
+        title=&quot;We are all chained to tech&quot;
+        src=&quot;/static/8fc3881cc39892b2205ac38726f05659/d7854/chained-to-tech.jpg&quot;
+        srcset=&quot;/static/8fc3881cc39892b2205ac38726f05659/d2f63/chained-to-tech.jpg 163w,
+/static/8fc3881cc39892b2205ac38726f05659/c989d/chained-to-tech.jpg 325w,
+/static/8fc3881cc39892b2205ac38726f05659/d7854/chained-to-tech.jpg 550w&quot;
+        sizes=&quot;(max-width: 550px) 100vw, 550px&quot;
+        style=&quot;width:100%;height:100%;margin:0;vertical-align:middle;position:absolute;top:0;left:0;&quot;
+        loading=&quot;lazy&quot;
+        decoding=&quot;async&quot;
+      /&gt;
+    &lt;/span&gt;
+    &lt;figcaption class=&quot;gatsby-resp-image-figcaption&quot;&gt;We are all chained to tech&lt;/figcaption&gt;
+  &lt;/figure&gt;&lt;/p&gt;
+&lt;p&gt;This uncontrolled exposure technology has a lot of ill effects including affecting mental health and being the primary cause of distraction.&lt;/p&gt;
+&lt;p&gt;With the constant inclusion of more tech into our life, we are losing control over technology, and technology started to control our lives.&lt;/p&gt;
+&lt;p&gt;Tech Addiction is real.&lt;/p&gt;
+&lt;p&gt;The part of the reason why it is so addictive is that the technology and platforms around it are built it to be addictive. All the companies want to spend our time with their platforms. To do this tech companies are building solutions to understand us better than ourselves. With such power tech companies can possess, we need to take a moment to think ourselves.&lt;/p&gt;
+&lt;p&gt;On the other hand, we shouldn&apos;t forget that we are also a part of the equation by letting technology into our lives without any limits.&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Technology has become one of the &lt;code&gt;fundamental elements&lt;/code&gt; of this human world.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;It is hard to live a life without the help of technology. But by choosing how to bend the technology for our needs we can enable it to improve our lives or deteriorate it.&lt;/p&gt;
+&lt;p&gt;It&apos;s high time that we need to take control of technology. We need to become a &lt;code&gt;Techbender&lt;/code&gt;. (Got &lt;a href=&quot;https://avatar.fandom.com/wiki/Avatar:_The_Last_Airbender&quot;&gt;Avatar: The Last Airbender&lt;/a&gt; 🔥 💧 🌏 💨 reference here?)&lt;/p&gt;
+&lt;p&gt;The first step of becoming a Techbender is becoming &lt;code&gt;intensional&lt;/code&gt; about the use of technology. Here are some ideas to improve your &lt;code&gt;TechBending&lt;/code&gt; power.&lt;/p&gt;
+&lt;h3&gt;Reduce Social media&lt;/h3&gt;
+&lt;p&gt;The endless feed of social media sites like Facebook, Instagram, Twitter, and endless recommendations of YouTube have helped us hooked to those platforms forever. Prolonged exposure to social media has tons of negative impacts on us.&lt;/p&gt;
+&lt;p&gt;As social media is available in the devices that are always with us, it has become our go-to tool whenever we get bored, stressed, and ended up in a rabbit hole without doing the things that we need to do. Failing to do our duties causes even more stress. As we ended up spending more time on social media, we fail to spend enough time with our loved ones. Also, we always ended up &lt;code&gt;Doomscroling&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/72dbff9f5f1fc61712d685da969fef67/doomscroling.svg&quot; alt=&quot;Doomscroling&quot; title=&quot;Doomscroling&quot;&gt;&lt;/p&gt;
+&lt;p&gt;Reducing the consumption of social media will help us come our the hole that we dug without knowing and our loved ones will appreciate it.&lt;/p&gt;
+&lt;p&gt;Watch Netflix&apos;s documentary &lt;a href=&quot;https://www.netflix.com/in/title/81254224&quot;&gt;The Social Dilemma&lt;/a&gt; to learn more about the negative effects of Social Media on us.&lt;/p&gt;
+&lt;h3&gt;Reduce screen time&lt;/h3&gt;
+&lt;p&gt;Think about our lives two, three, or five years before. How much time did we spend on seeing the screens in the past and how much time are we spending now?&lt;/p&gt;
+&lt;p&gt;With lots of apps on our devices, we develop a constant urge to check notifications. Thus, it becomes a primary source of distraction.&lt;/p&gt;
+&lt;p&gt;Almost all of us are doing some part of the work on screens. Being a developer, on average I spend 12 hours with a screen per day. Even if I can manage right now, it is not good in the long run.&lt;/p&gt;
+&lt;p&gt;We can avoid those distractions by keeping the devices in Do Not Disturb (DND) mode whenever we are working, spending time with our friends &amp;#x26; family, and try to give our 100% of the attention.&lt;/p&gt;
+&lt;p&gt;Trying to get into activities, like gardening, painting, etc., that don&apos;t involve any screens will also help.&lt;/p&gt;
+&lt;p&gt;Also, try Spending at least 10 mins of a day without doing anything.&lt;/p&gt;
+&lt;h3&gt;Buy gadgets only when you need&lt;/h3&gt;
+&lt;p&gt;Dozens of devices are getting released to the consumer market every year. With each iteration, devices are getting better and better.&lt;/p&gt;
+&lt;p&gt;The companies are getting creative at selling a new device with one new feature that our current device doesn&apos;t have which we would use only once during the lifetime of the device.&lt;/p&gt;
+&lt;p&gt;Before buying/upgrading any device, take a moment to think yourself if the purchase brings value to your life and helps to move forward. Buying/upgrading technologies intensionally when you need it helps both economical &amp;#x26; environmentally friendly 😉.&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;One piece of advice regarding technology that I want to give to my 20-year self would be&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Don&apos;t focus on the Technology, instead focus on the value it brings.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Technology can be a boon or a bane depends upon how we use it. We need to remember that we have total control of the tech.&lt;/p&gt;
+&lt;p&gt;Thanks for sticking with me till here. Hope I was able to spread the idea of becoming a &lt;code&gt;TechBender&lt;/code&gt; and the path to do are simple enough to follow. Let me know your thoughts on the comments section below.&lt;/p&gt;
+&lt;p&gt;If you agree with my thoughts, Feel free to share this post with your friends and loved ones.&lt;/p&gt;</content:encoded></item><item><title><![CDATA[Deploy Gatsby Site to GitHub Pages using GitHub Actions]]></title><description><![CDATA[We are seeing an increase in the popularity of JAMStack. Gatsby is one of the popular JAMStack frameworks. There are a lot of tools and…]]></description><link>https://geekscreed.com/deploy-gatsby-site-to-github-pages-using-github-actions/</link><guid isPermaLink="false">https://geekscreed.com/deploy-gatsby-site-to-github-pages-using-github-actions/</guid><category><![CDATA[Gatsby]]></category><category><![CDATA[Web Development]]></category><category><![CDATA[GitHub]]></category><pubDate>Tue, 03 Dec 2019 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;We are seeing an increase in the popularity of &lt;a href=&quot;https://jamstack.org/&quot;&gt;JAMStack&lt;/a&gt;. &lt;a href=&quot;https://www.gatsbyjs.org/&quot;&gt;Gatsby&lt;/a&gt; is one of the popular JAMStack frameworks.&lt;/p&gt;
+&lt;p&gt;There are a lot of tools and services available to host a static site build by Gatsby. &lt;a href=&quot;https://pages.github.com/&quot;&gt;GitHub Pages&lt;/a&gt;, a free static site hosting service by GitHub, is one of them.&lt;/p&gt;
+&lt;p&gt;In this article, we will see how to build and deploy your existing Gatsby site using &lt;a href=&quot;https://github.com/features/actions&quot;&gt;GitHub Actions&lt;/a&gt; on every push to GitHub repo where your site is stored.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;In your &lt;code&gt;package.json&lt;/code&gt; file, add a build script pointing to &lt;code&gt;gatsby build&lt;/code&gt; (Most starters will already have it).&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;json&quot;&gt;&lt;pre class=&quot;lang-json&quot;&gt;&lt;code class=&quot;lang-json&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;token property&quot;&gt;&quot;scripts&quot;&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;token property&quot;&gt;&quot;build&quot;&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;gatsby build&quot;&lt;/span&gt;
+  &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Create a GitHub access token by following the steps over &lt;a href=&quot;https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line&quot;&gt;here&lt;/a&gt;. Please note that the token must be generated with repo permissions.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Open your GitHub repo settings, and go to the &lt;code&gt;Secrets&lt;/code&gt; section. Click on &lt;code&gt;Add a new secret&lt;/code&gt;. Fill &lt;code&gt;ACCESS_TOKEN&lt;/code&gt; in the &lt;code&gt;Name&lt;/code&gt; field and fill your generated access token from the previous step in the &lt;code&gt;Value&lt;/code&gt; field. Click on the &lt;code&gt;Add secret&lt;/code&gt; button.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;figure class=&quot;gatsby-resp-image-figure&quot; style=&quot;&quot;&gt;
+    &lt;span
+      class=&quot;gatsby-resp-image-wrapper&quot;
+      style=&quot;position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 650px; &quot;
+    &gt;
+      &lt;span
+    class=&quot;gatsby-resp-image-background-image&quot;
+    style=&quot;padding-bottom: 58.282208588957054%; position: relative; bottom: 0; left: 0; background-image: url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAMCAYAAABiDJ37AAAACXBIWXMAAAsTAAALEwEAmpwYAAABBElEQVQoz6WTu04DMRBF/fu0lJFoKBANXRo+gD9AoiQSJNkF/Io38Wvsi+yNVki7m4jE0vEUY1n3zoOJfcK3idgqD2MJOWeklC6Gbdof6M6CAKQMAPU6xilOH8a5wOd6jaZtwYVEiATnA3woxBEhxOpiDrbbGXT7A5z39fGgLQNEaUxKpxVumxYFYzoorSGEhJASSmnESJOEGUqOWefBhYKQusZiu0Sp9KTlc7Dyc7HR28kDkdKskln6D+NFSkbNitQrdCHgEDxs8EPiGtjf0aKYrlBJKP1gz80L7lZPePhYgjtVZ4boWNd/ULaklI89vi9x87rA7ds9vizv5zCf34i5OfwFDKWrRucJRm8AAAAASUVORK5CYII=&apos;); background-size: cover; display: block;&quot;
+  &gt;&lt;/span&gt;
+  &lt;img
+        class=&quot;gatsby-resp-image-image&quot;
+        alt=&quot;GitHub Add a new secret form&quot;
+        title=&quot;GitHub Add a new secret form&quot;
+        src=&quot;/static/893421f26451f5a46182ed58fe6fdc60/a6d36/GitHub-Add_a_new_secret_form.png&quot;
+        srcset=&quot;/static/893421f26451f5a46182ed58fe6fdc60/222b7/GitHub-Add_a_new_secret_form.png 163w,
+/static/893421f26451f5a46182ed58fe6fdc60/ff46a/GitHub-Add_a_new_secret_form.png 325w,
+/static/893421f26451f5a46182ed58fe6fdc60/a6d36/GitHub-Add_a_new_secret_form.png 650w,
+/static/893421f26451f5a46182ed58fe6fdc60/e548f/GitHub-Add_a_new_secret_form.png 975w,
+/static/893421f26451f5a46182ed58fe6fdc60/3c492/GitHub-Add_a_new_secret_form.png 1300w,
+/static/893421f26451f5a46182ed58fe6fdc60/c4451/GitHub-Add_a_new_secret_form.png 1450w&quot;
+        sizes=&quot;(max-width: 650px) 100vw, 650px&quot;
+        style=&quot;width:100%;height:100%;margin:0;vertical-align:middle;position:absolute;top:0;left:0;&quot;
+        loading=&quot;lazy&quot;
+        decoding=&quot;async&quot;
+      /&gt;
+    &lt;/span&gt;
+    &lt;figcaption class=&quot;gatsby-resp-image-figcaption&quot;&gt;GitHub Add a new secret form&lt;/figcaption&gt;
+  &lt;/figure&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Now, create a yml file in following path &lt;code&gt;.github/workflows/deploy-on-push.yml&lt;/code&gt; and paste the following contents to it.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;yml&quot;&gt;&lt;pre class=&quot;lang-yml&quot;&gt;&lt;code class=&quot;lang-yml&quot;&gt;&lt;span class=&quot;token key atrule&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; Gatsby Build and Deploy to GitHub Pages on Push
+
+&lt;span class=&quot;token key atrule&quot;&gt;on&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;token key atrule&quot;&gt;push&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;token key atrule&quot;&gt;branches&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; master
+
+&lt;span class=&quot;token key atrule&quot;&gt;jobs&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;token key atrule&quot;&gt;build-and-deploy&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;token key atrule&quot;&gt;runs-on&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; ubuntu&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;latest
+    &lt;span class=&quot;token key atrule&quot;&gt;steps&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;token key atrule&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; Checkout
+        &lt;span class=&quot;token key atrule&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; actions/checkout@master
+
+      &lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;token key atrule&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; Build and Deploy
+        &lt;span class=&quot;token key atrule&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; JamesIves/github&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;pages&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;deploy&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;action@master
+        &lt;span class=&quot;token key atrule&quot;&gt;env&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;token key atrule&quot;&gt;ACCESS_TOKEN&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; $&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt; secrets.ACCESS_TOKEN &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;
+          &lt;span class=&quot;token key atrule&quot;&gt;BRANCH&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; gh&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;pages
+          &lt;span class=&quot;token key atrule&quot;&gt;FOLDER&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; public
+          &lt;span class=&quot;token key atrule&quot;&gt;BUILD_SCRIPT&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; yarn &lt;span class=&quot;token important&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; yarn run build&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Commit your changes and push them to your GitHub repo.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This GitHub action will trigger if any push happened to master, spawns a ubuntu instance and check out the repo. Then it will do &lt;code&gt;yarn&lt;/code&gt; and &lt;code&gt;yarn build&lt;/code&gt;, which will generate the output to &lt;code&gt;public&lt;/code&gt; directory. The contents of the public folder will be deployed to &lt;code&gt;gh-pages&lt;/code&gt; branch.&lt;/p&gt;
+&lt;p&gt;Now on every push to your repo will build your site and deploy it to GitHub pages.&lt;/p&gt;
+&lt;p&gt;I hope this helped you to set up the deployment of Gatsby site to GitHub Pages using GitHub actions. Feel free to ask anything around this in the comments section below.&lt;/p&gt;</content:encoded></item><item><title><![CDATA[Git - Share Uncommitted Changes without Pushing]]></title><description><![CDATA[Git is the most popular version control system used to manage projects with multiple people working on it. It's distributive nature enables…]]></description><link>https://geekscreed.com/git-share-uncommited-changes/</link><guid isPermaLink="false">https://geekscreed.com/git-share-uncommited-changes/</guid><category><![CDATA[Git]]></category><pubDate>Sat, 29 Dec 2018 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;Git is the most popular version control system used to manage projects with multiple people working on it.&lt;/p&gt;
+&lt;p&gt;It&apos;s distributive nature enables developers to work on the projects without worrying about the availability of network or a central server.&lt;/p&gt;
+&lt;p&gt;A typical git workflow will be like&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Make the required changes.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;commit&lt;/code&gt; those changes.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;push&lt;/code&gt; them to the remote.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;figure class=&quot;gatsby-resp-image-figure&quot; style=&quot;&quot;&gt;
+    &lt;span
+      class=&quot;gatsby-resp-image-wrapper&quot;
+      style=&quot;position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 650px; &quot;
+    &gt;
+      &lt;span
+    class=&quot;gatsby-resp-image-background-image&quot;
+    style=&quot;padding-bottom: 93.25153374233128%; position: relative; bottom: 0; left: 0; background-image: url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAATCAYAAACQjC21AAAACXBIWXMAAAsTAAALEwEAmpwYAAACn0lEQVQ4y52UyW7bMBRF9TGNh8SWbc3UQIqaRcmzHcUZCqct+v+brgroFmKToE0Tu+3igCIFHTzyXVFZra8hqlWbZjWKYoG8WEKIFcJ0gSidI+SFxDADmBbFTHcxmTqvaeU4I9+V+fLQltUePFkiYAI+LRElS9hOgpHqvtAbmLjoG3J8h7Y3NKEwJsCoaLNsDduKMR4RKbOcWAr6Q1MyuLRO0T6PiuozaCLFJAxhrHLMygRXmovB4E/JKfHzO0XlIYxGYJJFsI8L6Osc44DiUiNnJW+hqGEIc19CpQzWXQ2zEdCWGUbE/z/hOGQwmhIjSmEchJQa2wJXhofB0PqnbUuhFnBYIofmczhLgVkeYxwxDKYOerKrhmzORV+Xz8/S98RKVmxQVteIkgV8KiQBFfCCEpTXCKM5DDPETKcYT7zzFRKDQvgpXINB+AmqDpoj8lJQEoNYITSdQjPY3wm7jzI3hqYSJBaTcIOC6j5CPUCg+7AnLoZD87ctvxcdJeQ1oqiG68TQdQpCErgkge9lIE4M18ugWxy9J8nz+b2FrHA2srH1Imy8GHPCUTkhFoTL5w5n4mI2dqB3VZ6JTH9oQeFRDZGvIYo1smSBPF2iyFZIk4VcS+MaMSvhWBw2SWDaEayO7ve0IznvGE/cn1vebO/RHD5h3xyxWB1QVjsUYofuwujmjNewSALN5DAsLisZXtmSN5vSNEfs9h+x3T1gvbmDqPbIiw1GKpFRUae+vG2uxs5LFSfPsBNttg/tan2L6+aI65tHlGKHgJWgrMtjIRvTyU8Eun1qWKvc3n1pD7efcf/wVQqbm0esNncIeSWFM43KCtWpdy4yUqr4tOgu1ZbxCp6fS4kfFHBIAhZW0AyKDz1dxqb/S3ReV/i09u0Hivdxy1ZyiWQAAAAASUVORK5CYII=&apos;); background-size: cover; display: block;&quot;
+  &gt;&lt;/span&gt;
+  &lt;img
+        class=&quot;gatsby-resp-image-image&quot;
+        alt=&quot;Typical Git Workflow&quot;
+        title=&quot;A Typical Git Workflow 🐙 😺&quot;
+        src=&quot;/static/224bb9b562b84eb300a8455797dbdad3/a6d36/git-workflow.png&quot;
+        srcset=&quot;/static/224bb9b562b84eb300a8455797dbdad3/222b7/git-workflow.png 163w,
+/static/224bb9b562b84eb300a8455797dbdad3/ff46a/git-workflow.png 325w,
+/static/224bb9b562b84eb300a8455797dbdad3/a6d36/git-workflow.png 650w,
+/static/224bb9b562b84eb300a8455797dbdad3/e548f/git-workflow.png 975w,
+/static/224bb9b562b84eb300a8455797dbdad3/b94e3/git-workflow.png 1126w&quot;
+        sizes=&quot;(max-width: 650px) 100vw, 650px&quot;
+        style=&quot;width:100%;height:100%;margin:0;vertical-align:middle;position:absolute;top:0;left:0;&quot;
+        loading=&quot;lazy&quot;
+        decoding=&quot;async&quot;
+      /&gt;
+    &lt;/span&gt;
+    &lt;figcaption class=&quot;gatsby-resp-image-figcaption&quot;&gt;A Typical Git Workflow 🐙 😺&lt;/figcaption&gt;
+  &lt;/figure&gt;&lt;/p&gt;
+&lt;p&gt;What if you have some pending changes which you don&apos;t want to commit but have to share them to others / share it to another machine? Let&apos;s find out.&lt;/p&gt;
+&lt;p&gt;Run the following command in your source git repo with the pending changes.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;bash&quot;&gt;&lt;pre class=&quot;lang-bash&quot;&gt;&lt;code class=&quot;lang-bash&quot;&gt;  &lt;span class=&quot;token function&quot;&gt;git&lt;/span&gt; &lt;span class=&quot;token function&quot;&gt;diff&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt; changes.patch&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This will create a file called &lt;code&gt;changes.patch&lt;/code&gt; which contains diff of pending changes.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Note:&lt;/strong&gt; This will work only in &lt;code&gt;linux&lt;/code&gt; or &lt;code&gt;mac&lt;/code&gt; machines. To make these commands work in &lt;code&gt;windows&lt;/code&gt;, use &lt;code&gt;Git Bash&lt;/code&gt;, which comes along with git installation.&lt;/p&gt;
+&lt;p&gt;The above command will create a patch of files which are already tracked. In order to create a patch with the untracked files, first stage those files using &lt;code&gt;git add .&lt;/code&gt; command and then run,&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;bash&quot;&gt;&lt;pre class=&quot;lang-bash&quot;&gt;&lt;code class=&quot;lang-bash&quot;&gt;  &lt;span class=&quot;token function&quot;&gt;git&lt;/span&gt; &lt;span class=&quot;token function&quot;&gt;diff&lt;/span&gt; --cached &lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt; changes.patch&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;If your repo contains binary files such as images and audio, in order to add them to your patch, stage them first and run,&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;bash&quot;&gt;&lt;pre class=&quot;lang-bash&quot;&gt;&lt;code class=&quot;lang-bash&quot;&gt;  &lt;span class=&quot;token function&quot;&gt;git&lt;/span&gt; &lt;span class=&quot;token function&quot;&gt;diff&lt;/span&gt; --cached --binary &lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt; changes.patch&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now share that &lt;code&gt;changes.patch&lt;/code&gt; file to your target repo and run,&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;bash&quot;&gt;&lt;pre class=&quot;lang-bash&quot;&gt;&lt;code class=&quot;lang-bash&quot;&gt;  &lt;span class=&quot;token function&quot;&gt;git&lt;/span&gt; apply changes.patch&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Voila 🎉, your uncommitted changes of your source repo are now available in your target repo.&lt;/p&gt;
+&lt;p&gt;Hope you will incorporate this in your daily git workflow.&lt;/p&gt;
+&lt;p&gt;Feel free to share your thoughts on the comment section below.&lt;/p&gt;</content:encoded></item><item><title><![CDATA[How to add Draft posts Support to Gatsby blog]]></title><description><![CDATA[Ever encountered a situation where you need to skip some unfinished, unpolished posts while deploying your Gatsby blog? Gatsby is awesome…]]></description><link>https://geekscreed.com/draft-post-support-on-gatsby-blog/</link><guid isPermaLink="false">https://geekscreed.com/draft-post-support-on-gatsby-blog/</guid><category><![CDATA[Gatsby]]></category><category><![CDATA[Web Development]]></category><category><![CDATA[GraphQL]]></category><pubDate>Sun, 16 Dec 2018 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;Ever encountered a situation where you need to skip some unfinished, unpolished posts while deploying your Gatsby blog?&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;/tag/gatsby&quot;&gt;Gatsby&lt;/a&gt; is awesome 💟.&lt;/p&gt;
+&lt;p&gt;Using modern web technologies, it takes care of a lot of optimizations out of the box.&lt;/p&gt;
+&lt;p&gt;Unlike traditional CMS like &lt;code&gt;WordPress&lt;/code&gt; which gives a lot of features out of the box, in Gatsby, we need to hand pick the features that we need for our blog and build it by ourselves. It&apos;s not bad. It&apos;s cool 😎.&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;With great power comes great responsibility.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;As we have the complete control over adding features to Gatsby, there are lots of ways to achieve a single feature.&lt;/p&gt;
+&lt;p&gt;In this article, I am gonna walk us through a simpler way to add support for draft posts to your Gatsby blog.&lt;/p&gt;
+&lt;p&gt;Let&apos;s enhance our blog powered by &lt;code&gt;markdown&lt;/code&gt; files to skip all the posts which are marked as &lt;code&gt;draft&lt;/code&gt; in it&apos;s &lt;code&gt;frontmatter&lt;/code&gt; while building the site.&lt;/p&gt;
+&lt;p&gt;First of all, pick your first published post and add &lt;code&gt;draft: false&lt;/code&gt;. This will make gatsby to create the &lt;code&gt;graphQL&lt;/code&gt; schema for &lt;code&gt;markdownRemark&lt;/code&gt; with &lt;code&gt;draft&lt;/code&gt; field in it, which is needed in while querying.&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;Note:&lt;/strong&gt; Gatsby infers the schema during the initial load of the development server. Hence you need to restart the gatsby development server in order to add &lt;code&gt;drafts&lt;/code&gt; property to the gatsby schema.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Add the following filter in every page where you are querying &lt;code&gt;allMarkdownRemark&lt;/code&gt;.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;diff&quot;&gt;&lt;pre class=&quot;lang-diff&quot;&gt;&lt;code class=&quot;lang-diff&quot;&gt;&lt;span class=&quot;token unchanged&quot;&gt;&lt;span class=&quot;token prefix unchanged&quot;&gt; &lt;/span&gt;   ...
+&lt;span class=&quot;token prefix unchanged&quot;&gt; &lt;/span&gt;   allMarkdownRemark(
+&lt;/span&gt;&lt;span class=&quot;token deleted-sign deleted&quot;&gt;&lt;span class=&quot;token prefix deleted&quot;&gt;-&lt;/span&gt;      sort: { fields: [frontmatter___date], order: DESC }
+&lt;/span&gt;&lt;span class=&quot;token inserted-sign inserted&quot;&gt;&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;      sort: { fields: [frontmatter___date], order: DESC },
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;      filter: {frontmatter: {draft: {ne: true}}}
+&lt;/span&gt;&lt;span class=&quot;token unchanged&quot;&gt;&lt;span class=&quot;token prefix unchanged&quot;&gt; &lt;/span&gt;   ) {
+&lt;span class=&quot;token prefix unchanged&quot;&gt; &lt;/span&gt;   ...&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Next, add the following change in the graphql query of &lt;code&gt;createPages&lt;/code&gt; method in &lt;code&gt;gatsby-node.js&lt;/code&gt;. It will create the &lt;code&gt;draft&lt;/code&gt; posts during &lt;code&gt;development&lt;/code&gt; phase but skips during the &lt;code&gt;production&lt;/code&gt; phase.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;diff&quot;&gt;&lt;pre class=&quot;lang-diff&quot;&gt;&lt;code class=&quot;lang-diff&quot;&gt;...
+resolve(
+&lt;span class=&quot;token unchanged&quot;&gt;&lt;span class=&quot;token prefix unchanged&quot;&gt; &lt;/span&gt; graphql(
+&lt;span class=&quot;token prefix unchanged&quot;&gt; &lt;/span&gt;   `{
+&lt;/span&gt;&lt;span class=&quot;token deleted-sign deleted&quot;&gt;&lt;span class=&quot;token prefix deleted&quot;&gt;-&lt;/span&gt;      allMarkdownRemark(sort: {fields: [frontmatter___date], order: DESC}, limit: 1000) {
+&lt;/span&gt;&lt;span class=&quot;token inserted-sign inserted&quot;&gt;&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;      allMarkdownRemark(
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;       sort: {fields: [frontmatter___date], order: DESC},
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;         ${
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;           process.env.NODE_ENV === &apos;production&apos; ?
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;           &apos;filter: {frontmatter: {draft: {ne: true}}}&apos; :
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;           &apos;&apos;
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;         }
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;         limit: 1000
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;      ) {
+&lt;/span&gt;&lt;span class=&quot;token unchanged&quot;&gt;&lt;span class=&quot;token prefix unchanged&quot;&gt; &lt;/span&gt;      edges {
+&lt;span class=&quot;token prefix unchanged&quot;&gt; &lt;/span&gt;       ...&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now in &lt;code&gt;gatsby-config.js&lt;/code&gt; file, make the following change to skip draft posts while generating the RSS feed.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;diff&quot;&gt;&lt;pre class=&quot;lang-diff&quot;&gt;&lt;code class=&quot;lang-diff&quot;&gt;...
+&lt;span class=&quot;token deleted-sign deleted&quot;&gt;&lt;span class=&quot;token prefix deleted&quot;&gt;-&lt;/span&gt;  `gatsby-plugin-feed`,
+&lt;/span&gt;&lt;span class=&quot;token inserted-sign inserted&quot;&gt;&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;  {
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;     resolve: `gatsby-plugin-feed`,
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;     options: {
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;       feeds: [
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;         {
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;           query: `
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;           {
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;             allMarkdownRemark(
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;               limit: 1000,
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;               sort: {order: DESC, fields: [frontmatter___date]},
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;               filter: {frontmatter: {draft: {ne: true}}}
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;             ) {
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;               edges {
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;                 node {
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;                   excerpt
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;                   html
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;                   fields {
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;                     slug
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;                   }
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;                   frontmatter {
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;                     title
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;                     date
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;                   }
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;                 }
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;               }
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;             }
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;           }
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;           `,
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;           output: `rss.xml`
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;         },
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;       ]
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;     }
+&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt; },
+&lt;/span&gt;...&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;That&apos;s it. Now your blog has support for draft posts. Any post which is marked as &lt;code&gt;draft: true&lt;/code&gt; in its front matter will be skipped during the build time and available during the development time.&lt;/p&gt;
+&lt;p&gt;I haven&apos;t covered every case. But this is applicable to most of the cases.&lt;/p&gt;
+&lt;p&gt;Once check the list of plugins you use in your &lt;code&gt;gatsby-config.js&lt;/code&gt; file. You might be using some other plugins like &lt;a href=&quot;https://www.gatsbyjs.org/packages/gatsby-plugin-feed-generator/&quot;&gt;gatsby-plugin-feed-generator&lt;/a&gt;. You would need to configure it&apos;s graphql query accordingly.&lt;/p&gt;
+&lt;p&gt;Hope I have helped you in adding drafts feature to your Gatsby blog with a minimal effort.&lt;/p&gt;
+&lt;p&gt;Did this post help you to achieve it or found it complicated?&lt;/p&gt;
+&lt;p&gt;Feel free to share your thoughts in the comments section.&lt;/p&gt;</content:encoded></item><item><title><![CDATA[Why you should use create-react-app to Scaffold your Next React App?]]></title><description><![CDATA[Hello folks. In this article, I am gonna share why we should stop building custom webpack config and instead use create-react-app to…]]></description><link>https://geekscreed.com/use-create-react-app-to-scaffold-next-react-app/</link><guid isPermaLink="false">https://geekscreed.com/use-create-react-app-to-scaffold-next-react-app/</guid><category><![CDATA[React JS]]></category><category><![CDATA[Web Development]]></category><category><![CDATA[Webpack]]></category><pubDate>Wed, 12 Dec 2018 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;Hello folks.&lt;/p&gt;
+&lt;p&gt;In this article, I am gonna share why we should stop building custom webpack config and instead use &lt;a href=&quot;https://facebook.github.io/create-react-app/&quot;&gt;create-react-app&lt;/a&gt; to scaffold our react application.&lt;/p&gt;
+&lt;p&gt;React is great. Out of the box, it is just a view library. The ecosystem around React is really great and it&apos;s huge.&lt;/p&gt;
+&lt;p&gt;We have to basically pick the react compatible parts like router, state management library for building our application. This is a really tiring task.&lt;/p&gt;
+&lt;p&gt;Setting up a modern react app from scratch is not easy and it makes us lost in the process due to a lot of overwhelming choices.&lt;/p&gt;
+&lt;p&gt;React is evolving really fast. And so the tooling around it.&lt;/p&gt;
+&lt;p&gt;If you are trying to set up everything from scratch, you need to hassle with lot more things like &lt;code&gt;webpack&lt;/code&gt;, &lt;code&gt;babel&lt;/code&gt; which is a different world altogether.&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;The &lt;code&gt;create-react-app&lt;/code&gt; helps in avoiding those hassles and enables us to focus on the application rather than the configuration.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Even though &lt;code&gt;create-react-app&lt;/code&gt; was available to developers since 2016, I have seen many people still searching for boilerplate and trying to set up the project from scratch even in 2018. This motivated me to write about this topic.&lt;/p&gt;
+&lt;p&gt;Over the period of 2 years, the &lt;a href=&quot;https://github.com/facebook/create-react-app/blob/master/CHANGELOG.md&quot;&gt;create-react-app&lt;/a&gt; has matured a lot and provides a lot of cool features out of the box and drop in support for some features.&lt;/p&gt;
+&lt;p&gt;Scaffolding a React project with &lt;code&gt;create-react-app&lt;/code&gt; is super easy. No global installations of CLIs needed. If you use the recent versions on &lt;code&gt;node&lt;/code&gt; and &lt;code&gt;npm&lt;/code&gt;, then run&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;bash&quot;&gt;&lt;pre class=&quot;lang-bash&quot;&gt;&lt;code class=&quot;lang-bash&quot;&gt; &lt;span class=&quot;token function&quot;&gt;npm&lt;/span&gt; init react-app &lt;span class=&quot;token operator&quot;&gt;&amp;lt;&lt;/span&gt;app-name&lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;If you are on the &lt;code&gt;yarn&lt;/code&gt; team, then run&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;bash&quot;&gt;&lt;pre class=&quot;lang-bash&quot;&gt;&lt;code class=&quot;lang-bash&quot;&gt; &lt;span class=&quot;token function&quot;&gt;yarn&lt;/span&gt; create react-app &lt;span class=&quot;token operator&quot;&gt;&amp;lt;&lt;/span&gt;app-name&lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This will create a folder, with the project structure that is specified in &lt;a href=&quot;https://facebook.github.io/create-react-app/docs/folder-structure&quot;&gt;documentation&lt;/a&gt;. It has some built-in scripts to develop with ease using features like auto reload, linting, error messages and building minified production ready bundle.&lt;/p&gt;
+&lt;p&gt;Before looking into the pros and cons of using &lt;code&gt;create-react-app&lt;/code&gt;, let&apos;s see some of the features that are provided along with it, which can work without any configuration. I will give a small subset of features and the links for the docs.&lt;/p&gt;
+&lt;h3&gt;Features&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Support for most of latest JavaScript standards and JSX using pre-configured &lt;a href=&quot;https://github.com/facebook/create-react-app/tree/master/packages/babel-preset-react-app&quot;&gt;babel&lt;/a&gt; configuration.&lt;/li&gt;
+&lt;li&gt;Drop-in support for &lt;a href=&quot;https://prettier.io/&quot;&gt;prettier&lt;/a&gt; which can be configured to run on staged files before git commit. Learn more about it on the &lt;a href=&quot;https://facebook.github.io/create-react-app/docs/setting-up-your-editor#formatting-code-automatically&quot;&gt;docs&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Out of the box support for &lt;a href=&quot;https://github.com/css-modules/css-modules&quot;&gt;CSS Modules&lt;/a&gt;. All you need to do is create the CSS file with extension &lt;code&gt;&amp;#x3C;file-name&gt;.module.css&lt;/code&gt; and it will pick that file as a CSS Module. Learn more about it on the &lt;a href=&quot;https://facebook.github.io/create-react-app/docs/adding-a-css-modules-stylesheet&quot;&gt;docs&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Lot of the developers use &lt;a href=&quot;https://sass-lang.com/&quot;&gt;SASS&lt;/a&gt;. There is a drop in support for SASS as well. Just install &lt;code&gt;node-sass&lt;/code&gt; to your project and you are good to go. All the files with &lt;code&gt;.sass&lt;/code&gt; extension will be taken by the SASS preprocessor. Learn more about it on the &lt;a href=&quot;https://facebook.github.io/create-react-app/docs/adding-a-sass-stylesheet&quot;&gt;docs&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;The CSS files in the bundle will be minified and vendor prefixed using &lt;a href=&quot;https://github.com/postcss/autoprefixer&quot;&gt;autoprefixer&lt;/a&gt;. Based on your target audience, you can enable polyfills for new CSS features using &lt;code&gt;browserslist&lt;/code&gt; property in &lt;code&gt;package.json&lt;/code&gt;. Learn more about it on the &lt;a href=&quot;https://facebook.github.io/create-react-app/docs/post-processing-css&quot;&gt;docs&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Support for code splitting via &lt;a href=&quot;https://github.com/tc39/proposal-dynamic-import&quot;&gt;dynamic &lt;code&gt;import()&lt;/code&gt;&lt;/a&gt;. This works great with &lt;a href=&quot;https://reactjs.org/docs/code-splitting.html#reactlazy&quot;&gt;&lt;code&gt;React.lazy&lt;/code&gt;&lt;/a&gt; and &lt;code&gt;Suspense&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;Drop-in support for static type checkers like &lt;a href=&quot;https://facebook.github.io/create-react-app/docs/adding-flow&quot;&gt;Flow&lt;/a&gt; and &lt;a href=&quot;https://facebook.github.io/create-react-app/docs/adding-typescript&quot;&gt;TypeScript&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Support for custom environment variables using &lt;code&gt;.env&lt;/code&gt; files. Learn more about it on the &lt;a href=&quot;https://facebook.github.io/create-react-app/docs/adding-custom-environment-variables&quot;&gt;docs&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Opt-in support for PWAs. You will get &lt;code&gt;manifest.json&lt;/code&gt; and Service Worker files out of the box. You just need to customize &lt;code&gt;manifest.json&lt;/code&gt; according to your needs and enable service worker. Learn more about it on the &lt;a href=&quot;https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app&quot;&gt;docs&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Provides support for testing using &lt;a href=&quot;https://jestjs.io/&quot;&gt;Jest&lt;/a&gt;. Learn more about it on the &lt;a href=&quot;https://facebook.github.io/create-react-app/docs/running-tests&quot;&gt;docs&lt;/a&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;As you see, &lt;code&gt;create-react-app&lt;/code&gt; provides a lot of great features to build. In addition to that, there are a lot of advantages and some disadvantages of using &lt;code&gt;create-react-app&lt;/code&gt; to scaffold your application.&lt;/p&gt;
+&lt;h3&gt;Pros&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;You don&apos;t need to break yourself in configuration. You can just focus yourself on building the app.&lt;/li&gt;
+&lt;li&gt;Saves a lot of time and energy as it provides a lot of common things out of the box.&lt;/li&gt;
+&lt;li&gt;Training a newcomer about your project is easy. You just need to train them about the project and point them to the &lt;code&gt;create-react-app&lt;/code&gt; &lt;a href=&quot;https://facebook.github.io/create-react-app/&quot;&gt;documentation&lt;/a&gt; for setup and configuration.&lt;/li&gt;
+&lt;li&gt;As it is maintained by Facebook, support for new features of React will be available immediately.&lt;/li&gt;
+&lt;li&gt;Updating to a new version is super easy. Just replace the version of &lt;code&gt;react-scripts&lt;/code&gt; in &lt;code&gt;package.json&lt;/code&gt; and run &lt;code&gt;npm install&lt;/code&gt;. That&apos;s it.&lt;/li&gt;
+&lt;li&gt;Speaking of updating, as &lt;code&gt;create-react-app&lt;/code&gt; takes care of handling under the hood things, updating things like &lt;code&gt;webpack&lt;/code&gt; and &lt;code&gt;babel&lt;/code&gt; will be taken care by them. We don&apos;t need to hassle with it again.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Cons&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;It provides an opinionated option for building a react app. Not everyone will like that.&lt;/li&gt;
+&lt;li&gt;It helps only if you are starting a project from scratch. It won&apos;t help on the case of your existing application where you need to partially migrate to react.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The choices provided by create-react-app is not enough? You can easily opt-out by running&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;bash&quot;&gt;&lt;pre class=&quot;lang-bash&quot;&gt;&lt;code class=&quot;lang-bash&quot;&gt;  &lt;span class=&quot;token function&quot;&gt;npm&lt;/span&gt; run &lt;span class=&quot;token function&quot;&gt;eject&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This will copy all the configuration files like &lt;code&gt;webpack&lt;/code&gt;, &lt;code&gt;eslint&lt;/code&gt; into your project and gives you choice to customize it.&lt;/p&gt;
+&lt;p&gt;As you see, using &lt;code&gt;create-react-app&lt;/code&gt; provides you with a lot of advantages over building custom webpack config.&lt;/p&gt;
+&lt;p&gt;Hope I have given an overview of the features of &lt;code&gt;create-react-app&lt;/code&gt; and convinced you to choose it for your next React project.&lt;/p&gt;
+&lt;p&gt;Starting a new React project? Which path are you gonna choose?&lt;/p&gt;
+&lt;p&gt;With &lt;code&gt;create-react-app&lt;/code&gt; or custom config from scratch?&lt;/p&gt;
+&lt;p&gt;Are you using &lt;code&gt;create-react-app&lt;/code&gt; on your existing app? Are you facing any issue with it?&lt;/p&gt;
+&lt;p&gt;Feel free to share your opinion on comments.&lt;/p&gt;</content:encoded></item><item><title><![CDATA[What Powers Us]]></title><description><![CDATA[An overview of various tools and services that were used for building and hosting this website is provided. It is strongly recommended to…]]></description><link>https://geekscreed.com/what-powers-us/</link><guid isPermaLink="false">https://geekscreed.com/what-powers-us/</guid><category><![CDATA[General]]></category><pubDate>Sat, 01 Dec 2018 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;An overview of various tools and services that were used for building and hosting this website is provided. It is strongly &lt;strong&gt;recommended&lt;/strong&gt; to take a look at it.&lt;/p&gt;
+&lt;h3&gt;Gatsby&lt;/h3&gt;
+&lt;p&gt;&lt;a href=&quot;https://gatsbyjs.org/&quot; title=&quot;Gatsby&quot;&gt;Gatsby&lt;/a&gt; is an open source static site generator powered by &lt;a href=&quot;http://reactjs.org/&quot; title=&quot;React&quot;&gt;React&lt;/a&gt;. It enables developers to build &lt;em&gt;apps&lt;/em&gt; and &lt;em&gt;websites&lt;/em&gt; using &lt;a href=&quot;https://jamstack.org/&quot; title=&quot;JAMstack&quot;&gt;JAMstack&lt;/a&gt; and provides modern website building features like &lt;em&gt;code splitting, pre fetching, PWA&lt;/em&gt; out of the box.&lt;/p&gt;
+&lt;p&gt;Posts can be written in &lt;a href=&quot;https://guides.github.com/features/mastering-markdown/&quot; title=&quot;Markdown&quot;&gt;Markdown&lt;/a&gt; format and customize it with HTML, CSS and React knowledge. You can bring data from many &lt;a href=&quot;https://www.gatsbyjs.org/docs/content-and-data/&quot; title=&quot;Gatsby Content and Data&quot;&gt;sources&lt;/a&gt; at the time of building the app.
+Sites built using Gatsby can be hosted using any static server. Also it can be hosted in &lt;a href=&quot;https://pages.github.com&quot; title=&quot;Github Pages&quot;&gt;Github pages&lt;/a&gt; for free.&lt;/p&gt;
+&lt;h3&gt;Google Domains&lt;/h3&gt;
+&lt;p&gt;&lt;a href=&quot;https://godaddy.com&quot;&gt;GoDaddy&lt;/a&gt; is a web hosting and domain registrar company. It is a widely used service for domain registration.
+In addition to that, they also provide professional email, WordPress hosting and much more services. The domain name for this &lt;a href=&quot;https://geekscreed.com&quot;&gt;website&lt;/a&gt; has been registered with GoDaddy.&lt;/p&gt;
+&lt;h3&gt;DigitalOcean&lt;/h3&gt;
+&lt;p&gt;&lt;a href=&quot;https://m.do.co/c/47627b4e916e&quot;&gt;DigitalOcean&lt;/a&gt; is a cloud infrastructure company which provides services like Virtual Private Servers, Load Balancers, DNS Management, Block Storage, Object storage and more. DigitalOcean is known for their predictable pricing and simpler to use platform. We use their DNS management service for powering this site.&lt;/p&gt;
+&lt;h3&gt;GitHub&lt;/h3&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com&quot;&gt;GitHub&lt;/a&gt; is an online Git repository hosting service. A software developer might have heard of GitHub already. It is most commonly used website to host Open Source software and libraries. GitHub offers unlimited public repositories for free and private repositories for a reasonable price. GitHub provides &lt;code&gt;pages&lt;/code&gt; service using which a small website for user/organisation/project can be hosted for free. This site is hosted using &lt;a href=&quot;https://pages.github.io&quot;&gt;GitHub Pages&lt;/a&gt;.&lt;/p&gt;
+&lt;h3&gt;Disqus&lt;/h3&gt;
+&lt;p&gt;&lt;a href=&quot;https://disqus.com/&quot;&gt;Disqus&lt;/a&gt; is a blog comment hosting service. Disqus can be integrated easily with various services like &lt;code&gt;Wordpress&lt;/code&gt;, &lt;code&gt;Tumblr&lt;/code&gt; and also for most static site generators like &lt;code&gt;Jekyll&lt;/code&gt;, &lt;code&gt;Hexo&lt;/code&gt; and so on.
+It adapts well both in mobile and web. It also offers upvotes, downvotes, threaded replies to the comments.&lt;/p&gt;
+&lt;h3&gt;Unsplash&lt;/h3&gt;
+&lt;p&gt;&lt;a href=&quot;https://unsplash.com/&quot;&gt;Unsplash&lt;/a&gt; hosts a huge collection of royalty-free stock photos uploaded by various users around the internet. We are using the images from Unsplash for various images in the site. Check out the collection of images that we are using in this website over &lt;a href=&quot;https://unsplash.com/collections/3677951/geekscreed&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;A basic overview of the tools and services that used for building and hosting this blog is given.&lt;/p&gt;
+&lt;p&gt;The technologies and services that we use might change in future. In case we change our stack, will update this article accordingly.&lt;/p&gt;
+&lt;p&gt;Love the way that is used for our existence on the internet. &lt;em&gt;Share your &lt;strong&gt;comments&lt;/strong&gt; below.&lt;/em&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[Hello World]]></title><description><![CDATA[01001000 01100101 01101100 01101100 01101111 01010111 01101111 01110010 01101100 01100100 00100001 Wondering what is written in the above…]]></description><link>https://geekscreed.com/hello-world/</link><guid isPermaLink="false">https://geekscreed.com/hello-world/</guid><category><![CDATA[General]]></category><pubDate>Sat, 24 Nov 2018 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;&lt;code&gt;01001000 01100101 01101100 01101100 01101111&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;01010111 01101111 01110010 01101100 01100100 00100001&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;Wondering what is written in the above encoded codes?&lt;/p&gt;
+&lt;p&gt;Hmm!! It&apos;s not that hard. If you haven&apos;t found it yet, will give you a clue. It is a statement used by most of the programming languages to &lt;code&gt;greet&lt;/code&gt; the programmer when they meet for the first time.&lt;/p&gt;
+&lt;p&gt;Yes. You have got it. It&apos;s &lt;code&gt;Hello World!&lt;/code&gt;, whose characters are written in binary.&lt;/p&gt;
+&lt;p&gt;Kudos. Hello World 👋🏾 🌏. Nice to meet you via this blog post.&lt;/p&gt;
+&lt;h3&gt;Who am I?&lt;/h3&gt;
+&lt;p&gt;I am &lt;a href=&quot;https://github.com/sasivarnan&quot;&gt;Sasivarnan R&lt;/a&gt;, a software developer who is passionate about computers and various technologies around it. I am planning to share the things that I learnt.&lt;/p&gt;
+&lt;h3&gt;What is this site for?&lt;/h3&gt;
+&lt;p&gt;The purpose of this site is to showcase various things that I build and various technologies that I explore.&lt;/p&gt;
+&lt;p&gt;I am interested in &lt;code&gt;JavaScript&lt;/code&gt; and &lt;code&gt;IoT&lt;/code&gt;. To start with, I will be sharing articles around these topics.&lt;/p&gt;
+&lt;p&gt;Wondering how this blog is built and hosted? Checkout the &lt;a href=&quot;/blog/what-powers-us&quot;&gt;What Powers Us&lt;/a&gt; article to know more about that.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Should I follow this blog?&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;If you are a one of the &lt;code&gt;geek&lt;/code&gt; programmer or hobbyist who is interested in the any of the above things, you can follow this blog.&lt;/p&gt;
+&lt;p&gt;Follow us on &lt;a href=&quot;https://facebook.com/g33kscr33d&quot;&gt;facebook&lt;/a&gt; &amp;#x26; &lt;a href=&quot;https://twitter.com/g33kscr33d&quot;&gt;twitter&lt;/a&gt;. If you use &lt;a href=&quot;https://feedly.com&quot;&gt;feedly&lt;/a&gt; or any &lt;code&gt;RSS&lt;/code&gt; reader, &lt;a href=&quot;/rss.xml&quot;&gt;subscribe&lt;/a&gt; to our blog.&lt;/p&gt;
+&lt;p&gt;I am excited to write a lot. What should I write about?
+I love to hear from you. Reach us with the comment section below.&lt;/p&gt;</content:encoded></item></channel></rss>
