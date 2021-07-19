@@ -1,5 +1,5 @@
 import React, {
-  Fragment,
+  lazy,
   Suspense,
   useEffect,
   useLayoutEffect,
@@ -9,8 +9,11 @@ import React, {
 import { graphql, useStaticQuery } from "gatsby";
 import { useLink, useScript, useHead, useTitleTemplate } from "hoofd";
 // import AOS from "aos";
+
 import Header from "./Header";
 import Footer from "./Footer";
+
+import ThemeContext from "../contexts/ThemeContext";
 
 import "../styles/fonts.css";
 import "../styles/app.scss";
@@ -18,10 +21,10 @@ import "../styles/overrides.css";
 
 const AD_SENSE_CLIENT = process.env.GATSBY_GOOGLE_AD_SENSE_CLIENT;
 
-const Search = React.lazy(() => import("./Search"));
+const Search = lazy(() => import("./Search"));
 
 const Layout = ({ children, location }) => {
-  const [theme, setTheme] = useState("light");
+  const [theme, setTheme] = useState("");
 
   const [showSearch, setShowSearch] = useState(false);
 
@@ -42,9 +45,7 @@ const Layout = ({ children, location }) => {
         "(prefers-color-scheme: dark)"
       );
 
-      if (darkModeMatcher?.matches) {
-        setTheme("dark");
-      }
+      setTheme(darkModeMatcher?.matches ? "dark" : "light");
     }
   }, []);
 
@@ -58,31 +59,9 @@ const Layout = ({ children, location }) => {
   }, [location.pathname]);
 
   useEffect(() => {
-    localStorage.setItem("theme", theme);
-    document.querySelector("html").dataset.theme = theme;
-
-    const lightThemeStylesheet = document.querySelector(
-      'link[href$="code-theme-light.css"]'
-    );
-
-    const darkThemeStylesheet = document.querySelector(
-      'link[href$="code-theme-dark.css"]'
-    );
-
-    if (theme === "light") {
-      import(
-        /* webpackChunkName: "code-theme-light" */ "prism-themes/themes/prism-coldark-cold.css"
-      ).then(() => {
-        if (darkThemeStylesheet) darkThemeStylesheet.disabled = true;
-        if (lightThemeStylesheet) lightThemeStylesheet.disabled = false;
-      });
-    } else {
-      import(
-        /* webpackChunkName: "code-theme-dark" */ "prism-themes/themes/prism-darcula.css"
-      ).then(() => {
-        if (lightThemeStylesheet) lightThemeStylesheet.disabled = true;
-        if (darkThemeStylesheet) darkThemeStylesheet.disabled = false;
-      });
+    if (theme) {
+      localStorage.setItem("theme", theme);
+      document.querySelector("html").dataset.theme = theme;
     }
   }, [theme]);
 
@@ -170,7 +149,7 @@ const Layout = ({ children, location }) => {
   }, [showSearch]);
 
   return (
-    <Fragment>
+    <ThemeContext.Provider value={theme}>
       <Header
         theme={theme}
         siteMetadata={site.siteMetadata}
@@ -187,7 +166,7 @@ const Layout = ({ children, location }) => {
       )}
 
       <Footer siteMetadata={site.siteMetadata} />
-    </Fragment>
+    </ThemeContext.Provider>
   );
 };
 

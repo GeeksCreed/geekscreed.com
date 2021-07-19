@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useMemo, Fragment } from "react";
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  Fragment,
+  useContext,
+} from "react";
 import { graphql, Link } from "gatsby";
 import { useHead, useLink, useScript } from "hoofd";
 import { getImage } from "gatsby-plugin-image";
@@ -10,6 +16,8 @@ import PageProgressButton from "../components/PageProgressButton";
 import HeroImage from "../components/HeroImage";
 import RelatedPosts from "../components/RelatedPosts";
 import TooltipWrapper from "../components/TooltipWrapper";
+
+import ThemeContext from "../contexts/ThemeContext";
 
 import "../styles/post.scss";
 
@@ -35,6 +43,8 @@ const Post = (props) => {
 
   const [showComment, setShowComment] = useState(false);
 
+  const theme = useContext(ThemeContext);
+
   useEffect(() => {
     const timeout = setTimeout(() => {
       setShowContent(true);
@@ -55,7 +65,7 @@ const Post = (props) => {
 
   const title = post.frontmatter.title;
 
-  const disqusShortName = process.env.GATSBY_DISQUS_NAME;
+  const disqusShortName = process.env.GATSBY_DISQUS_NAME || "geekscreed";
 
   const disqusConfig = useMemo(
     () => ({
@@ -110,6 +120,15 @@ const Post = (props) => {
   });
 
   useLink({ rel: "canonical", href: url });
+
+  useLink({
+    rel: "stylesheet",
+    href: theme
+      ? theme === "light"
+        ? "/prism-themes/prism-coldark-cold.css"
+        : "/prism-themes/prism-darcula.css"
+      : "",
+  });
 
   useScript({
     id: "article-ld-data",
@@ -222,7 +241,7 @@ const Post = (props) => {
                           backgroundImage: `url(${
                             primary_author.profile_image ||
                             "/images/default-avatar-square-small.jpg"
-                            })`,
+                          })`,
                         }}
                       />
                     </Link>

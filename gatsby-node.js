@@ -1,6 +1,31 @@
 const path = require(`path`);
 
 const { createFilePath } = require(`gatsby-source-filesystem`);
+const CopyPlugin = require(`copy-webpack-plugin`);
+
+exports.onCreateWebpackConfig = ({ plugins, actions }) => {
+  const PRISM_THEMES_TO_COPY = ["prism-coldark-cold.css", "prism-darcula.css"];
+
+  actions.setWebpackConfig({
+    plugins: [
+      new CopyPlugin({
+        patterns: [
+          {
+            context: path.resolve(
+              __dirname,
+              "node_modules/prism-themes/themes"
+            ),
+            from: "*.css",
+            to: path.resolve(__dirname, "static/prism-themes"),
+            filter: (resourcePath) => {
+              return PRISM_THEMES_TO_COPY.includes(path.basename(resourcePath));
+            },
+          },
+        ],
+      }),
+    ],
+  });
+};
 
 exports.onCreateNode = ({ node, actions, getNode }) => {
   const { createNodeField } = actions;
