@@ -4,13 +4,14 @@ import React, {
   useMemo,
   Fragment,
   useContext,
+  lazy,
+  Suspense,
 } from "react";
 import { graphql, Link } from "gatsby";
 import { useHead, useLink, useScript } from "hoofd";
 import { getImage } from "gatsby-plugin-image";
 
 import { useInView } from "react-intersection-observer";
-import { DiscussionEmbed } from "disqus-react";
 
 import PageProgressButton from "../components/PageProgressButton";
 import HeroImage from "../components/HeroImage";
@@ -20,6 +21,8 @@ import TooltipWrapper from "../components/TooltipWrapper";
 import ThemeContext from "../contexts/ThemeContext";
 
 import "../styles/post.scss";
+
+const DiscussionEmbed = lazy(() => import("../components/DiscussionEmbed"));
 
 const loadPolyfills = async () => {
   if (typeof window.IntersectionObserver === "undefined") {
@@ -346,16 +349,18 @@ const Post = (props) => {
 
                 <div
                   className={`l-wrapper in-comments js-comments-iframe ${
-                    showComment ? "" : "m-load-comments__iframe"
+                    showComment ? "" : "m-load-comments__iframe hide"
                   }`}
                   data-aos="fade-up"
                 >
                   {tagsSectionInView && (
                     <div id="disqus_thread">
-                      <DiscussionEmbed
-                        shortname={disqusShortName}
-                        config={disqusConfig}
-                      />
+                      <Suspense fallback={null}>
+                        <DiscussionEmbed
+                          shortname={disqusShortName}
+                          config={disqusConfig}
+                        />
+                      </Suspense>
                     </div>
                   )}
                 </div>
